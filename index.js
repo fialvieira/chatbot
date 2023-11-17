@@ -37,9 +37,66 @@ function cod() {
     return result;
 }
 
-app.post('/insert', urlencodedParser, function (req, res) {
+app.post('/user/insert', urlencodedParser, function (req, res) {
+    let objJSON = {};
+    if (req.body.code_user) objJSON.code_user = req.body.code_user; else objJSON.code_user = cod();
+    if (req.body.activate) objJSON.activate = req.body.activate; else objJSON.activate = true;
+    if (req.body.full_name) objJSON.full_name = req.body.full_name; else objJSON.full_name = '';
+    if (req.body.user_name) objJSON.user_name = req.body.user_name; else objJSON.user_name = '';
+    if (req.body.email) objJSON.email = req.body.email; else objJSON.email = '';
+    if (req.body.password) objJSON.password = req.body.password; else objJSON.input = '';
+
+    insertUser(objJSON, function (result) {
+        res.send(result);
+    });
+});
+
+app.post('/user/update', urlencodedParser, function (req, res) {
+    let objJSON = {};
+    if (req.body.code_user) objJSON.code_user = req.body.code_user;
+    if (req.body.activate) objJSON.activate = req.body.activate;
+    if (req.body.full_name) objJSON.full_name = req.body.full_name;
+    if (req.body.user_name) objJSON.user_name = req.body.user_name;
+    if (req.body.email) objJSON.email = req.body.email;
+    if (req.body.password) objJSON.password = req.body.password;
+
+    updateUser(objJSON, function (result) {
+        res.send(result);
+    });
+});
+
+app.post('/user/delete', urlencodedParser, function (req, res) {
+    let objJSON = {};
+    if (req.body.code_user) objJSON.code_user = req.body.code_user;
+    if (req.body.activate) objJSON.activate = req.body.activate;
+    if (req.body.full_name) objJSON.full_name = req.body.full_name;
+    if (req.body.user_name) objJSON.user_name = req.body.user_name;
+    if (req.body.email) objJSON.email = req.body.email;
+    if (req.body.password) objJSON.password = req.body.password;
+
+    deleteUser(objJSON, function (result) {
+        res.send(result);
+    });
+});
+
+app.post('/user/find', urlencodedParser, function (req, res) {
+    let objJSON = {};
+    if (req.body.code_user) objJSON.code_user = req.body.code_user;
+    if (req.body.activate) objJSON.activate = req.body.activate;
+    if (req.body.full_name) objJSON.full_name = req.body.full_name;
+    if (req.body.user_name) objJSON.user_name = req.body.user_name;
+    if (req.body.email) objJSON.email = req.body.email;
+    if (req.body.password) objJSON.password = req.body.password;
+
+    findUser(objJSON, function (result) {
+        res.send(result);
+    });
+});
+
+app.post('/chatbot/insert', urlencodedParser, function (req, res) {
     let objJSON = {};
     if (req.body.code_user) objJSON.code_user = req.body.code_user; else objJSON.code_user = 0;
+    if (req.body.activate) objJSON.activate = req.body.activate; else objJSON.activate = true;
     if (req.body.code_current) objJSON.code_current = req.body.code_current; else objJSON.code_current = cod();
     if (req.body.code_relation) objJSON.code_relation = req.body.code_relation; else objJSON.code_relation = 0;
     if (req.body.code_before) objJSON.code_before = req.body.code_before; else objJSON.code_before = 0;
@@ -51,9 +108,10 @@ app.post('/insert', urlencodedParser, function (req, res) {
     });
 });
 
-app.post('/update', urlencodedParser, function (req, res) {
+app.post('/chatbot/update', urlencodedParser, function (req, res) {
     let objJSON = {};
     if (req.body.code_user) objJSON.code_user = req.body.code_user;
+    if (req.body.activate) objJSON.activate = req.body.activate; else objJSON.activate = true;
     if (req.body.code_current) objJSON.code_current = req.body.code_current;
     if (req.body.code_relation) objJSON.code_relation = req.body.code_relation;
     if (req.body.code_before) objJSON.code_before = req.body.code_before;
@@ -65,9 +123,10 @@ app.post('/update', urlencodedParser, function (req, res) {
     });
 });
 
-app.post('/delete', urlencodedParser, function (req, res) {
+app.post('/chatbot/delete', urlencodedParser, function (req, res) {
     let objJSON = {};
     if (req.body.code_user) objJSON.code_user = req.body.code_user;
+    if (req.body.activate) objJSON.activate = req.body.activate;
     if (req.body.code_current) objJSON.code_current = req.body.code_current;
     if (req.body.code_relation) objJSON.code_relation = req.body.code_relation;
     if (req.body.code_before) objJSON.code_before = req.body.code_before;
@@ -79,9 +138,10 @@ app.post('/delete', urlencodedParser, function (req, res) {
     });
 });
 
-app.post('/find', urlencodedParser, function (req, res) {
+app.post('/chatbot/find', urlencodedParser, function (req, res) {
     let objJSON = {};
     if (req.body.code_user) objJSON.code_user = req.body.code_user;
+    if (req.body.activate) objJSON.activate = req.body.activate;
     if (req.body.code_current) objJSON.code_current = req.body.code_current;
     if (req.body.code_relation) objJSON.code_relation = req.body.code_relation;
     if (req.body.code_before) objJSON.code_before = req.body.code_before;
@@ -93,9 +153,10 @@ app.post('/find', urlencodedParser, function (req, res) {
     });
 });
 
-app.get('/question', urlencodedParser, (req, res) => {
+app.get('/chatbot/question', urlencodedParser, (req, res) => {
     let objJSON = {};
     if (req.query.code_user) objJSON.code_user = Number(req.query.code_user); else objJSON.code_user = 0;
+    if (req.query.activate) objJSON.activate = req.query.activate; else objJSON.activate = true;
     if (req.query.code_before) objJSON.code_before = Number(req.query.code_before); else objJSON.code_before = 0;
     if (req.query.input) objJSON.input = req.query.input; else objJSON.input = '';
 
@@ -208,6 +269,7 @@ const nlp = function (question, array) {
     if (findInput > 0) return [{
         "_id": array[findIndex]._id,
         "code_user": array[findIndex].code_user,
+        "activate": array[findIndex].activate,
         "code_current": array[findIndex].code_current,
         "code_relation": array[findIndex].code_relation,
         "code_before": array[findIndex].code_before,
@@ -217,6 +279,7 @@ const nlp = function (question, array) {
     else return [{
         "_id": 0,
         "code_user": array[findIndex].code_user,
+        "activate": array[findIndex].activate,
         "code_current": array[findIndex].code_current,
         "code_relation": array[findIndex].code_relation,
         "code_before": array[findIndex].code_before,
