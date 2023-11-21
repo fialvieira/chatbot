@@ -33,7 +33,7 @@ function cod() {
     const minuto = data.getMinutes();
     const segundo = data.getSeconds();
     const milesegundos = data.getMilliseconds();
-    const result = parseInt(Number(ano + '' + mes + '' + dia + '' + hora + '' + minuto + '' + segundo + '' + milesegundos) / 2);
+    const result = Number(parseFloat(Number(ano + '' + mes + '' + dia + '' + hora + '' + minuto + '' + segundo + '' + milesegundos) / 2).toFixed(0));
     return result;
 }
 
@@ -89,6 +89,33 @@ app.post('/user/find', urlencodedParser, function (req, res) {
     if (req.body.password) objJSON.password = req.body.password;
 
     findUser(objJSON, function (result) {
+        res.send(result);
+    });
+});
+
+app.post('/user/activate/true', urlencodedParser, function (req, res) {
+    let objJSON = {};
+    if (req.body.code_user) objJSON.code_user = req.body.code_user; else objJSON.code_user = 0;
+
+    activateUserTrue(objJSON, function (result) {
+        res.send(result);
+    });
+});
+
+app.post('/user/activate/false', urlencodedParser, function (req, res) {
+    let objJSON = {};
+    if (req.body.code_user) objJSON.code_user = req.body.code_user; else objJSON.code_user = 0;
+
+    activateUserFalse(objJSON, function (result) {
+        res.send(result);
+    });
+});
+
+app.post('/user/delete/all', urlencodedParser, function (req, res) {
+    let objJSON = {};
+    if (req.body.code_user) objJSON.code_user = req.body.code_user; else objJSON.code_user = 0;
+
+    deleteUserAll(objJSON, function (result) {
         res.send(result);
     });
 });
@@ -228,6 +255,65 @@ const deleteData = function (objJSON, callback) {
 const findData = function (objJSON, callback) {
     const collection = db.collection('chatbot');
     collection.find(objJSON).toArray(function (err, result) {
+        assert.equal(null, err);
+        callback(result);
+    });
+}
+
+const insertUser = function (objJSON, callback) {
+    const collection = db.collection('user');
+    collection.insertOne(objJSON, function (err, result) {
+        assert.equal(null, err);
+        callback(result);
+    });
+}
+
+const updateUser = function (objJSON, callback) {
+    const collection = db.collection('user');
+    const code_user = objJSON.code_user;
+    collection.updateOne({code_user: code_user}, {$set: objJSON}, function (err, result) {
+        assert.equal(null, err);
+        callback(result);
+    });
+}
+
+const deleteUser = function (objJSON, callback) {
+    const collection = db.collection('user');
+    collection.deleteOne(objJSON, function (err, result) {
+        assert.equal(null, err);
+        callback(result);
+    });
+}
+
+const deleteUserAll = function (objJSON, callback) {
+    const collection = db.collection('chatbot');
+    collection.deleteMany(objJSON, function (err, result) {
+        assert.equal(null, err);
+        callback(result);
+    });
+}
+
+const findUser = function (objJSON, callback) {
+    const collection = db.collection('user');
+    collection.find(objJSON).toArray(function (err, result) {
+        assert.equal(null, err);
+        callback(result);
+    });
+}
+
+const activateUserTrue = function (objJSON, callback) {
+    const collection = db.collection('chatbot');
+    const code_user = objJSON.code_user;
+    collection.updateMany({code_user: code_user}, {$set: {activate: true}}, function (err, result) {
+        assert.equal(null, err);
+        callback(result);
+    });
+}
+
+const activateUserFalse = function (objJSON, callback) {
+    const collection = db.collection('chatbot');
+    const code_user = objJSON.code_user;
+    collection.updateMany({code_user: code_user}, {$set: {activate: false}}, function (err, result) {
         assert.equal(null, err);
         callback(result);
     });
