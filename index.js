@@ -377,15 +377,18 @@ const getName = function (question = '') {
     if (question.indexOf('Nome') >= 0) start = 'Nome';
     if (question.indexOf('nome') >= 0) start = 'nome';
     if (question.indexOf('chamo') >= 0) start = 'chamo';
-
     if ((start.length > 0) && (question.indexOf('seu') < 0)) {
         let indexStart = question.indexOf(start) + start.length + 1;
-        let end = '';
-        if ((question.indexOf(' e ') >= 0) && (question.indexOf(' e ') > indexStart)) end = ' e ';
-        else if ((question.indexOf(',') >= 0) && (question.indexOf(',') > indexStart)) end = ',';
-        else if ((question.indexOf(';') >= 0) && (question.indexOf(';') > indexStart)) end = ';';
-        else if ((question.indexOf('.') >= 0) && (question.indexOf('.') > indexStart)) end = '.';
-        let indexEnd = question.indexOf(end);
+        let index1 = question.indexOf(' e '); if (index1 < 0) index1 = Infinity;
+        let index2 = question.indexOf(','); if (index2 < 0) index2 = Infinity;
+        let index3 = question.indexOf(';'); if (index3 < 0) index3 = Infinity;
+        let index4 = question.indexOf('.'); if (index4 < 0) index4 = Infinity;
+        let indexEnd = [
+            Math.abs(index1-indexStart),
+            Math.abs(index2-indexStart),
+            Math.abs(index3-indexStart),
+            Math.abs(index4-indexStart),
+        ].sort((a, b) => a - b)[0] + indexStart;
         if (indexEnd < indexStart) indexEnd = question.length;
         nome = question.substring(indexStart, indexEnd);
         nome = nome.replace(/é/g, '');
