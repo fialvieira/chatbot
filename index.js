@@ -319,57 +319,247 @@ const activateUserFalse = function (objJSON, callback) {
     });
 }
 
+const getDocuments = function (question = '') {
+    question = question.toString().trim();
+
+    let _nome = getName(question);
+    let _idade = getYears(question);
+    let _email = '';
+    let _celular = '';
+    let _telefone = '';
+    let _cep = '';
+    let _cpf = '';
+    let _cnpj = '';
+
+    const questionTokens = question.split(' ');
+    for (let i = 0; i < questionTokens.length; i++) {
+        let word = questionTokens[i].toString().trim();
+
+        if (word.length >= 1) {
+            if (_email.length <= 0) _email = email(word);
+            if (_celular.length <= 0) _celular = celular(word);
+            if (_telefone.length <= 0) _telefone = telefone(word);
+            if (_cep.length <= 0) _cep = cep(word);
+            if (_cpf.length <= 0) _cpf = cpf(word);
+            if (_cnpj.length <= 0) _cnpj = cnpj(word);
+        }
+    }
+    let objJSON = {};
+    if (_nome.length > 0) objJSON.nome = _nome; else objJSON.nome = '';
+    if (_idade.length > 0) objJSON.idade = Number(_idade); else objJSON.idade = '';
+    if (_email.length > 0) objJSON.email = _email; else objJSON.email = '';
+    if (_celular.length > 0) objJSON.celular = Number(_celular); else objJSON.celular = '';
+    if (_telefone.length > 0) objJSON.telefone = Number(_telefone); else objJSON.telefone = '';
+    if (_cep.length > 0) objJSON.cep = Number(_cep); else objJSON.cep = '';
+    if (_cpf.length > 0) objJSON.cpf = Number(_cpf); else objJSON.cpf = '';
+    if (_cnpj.length > 0) objJSON.cnpj = Number(_cnpj); else objJSON.cnpj = '';
+
+    if ((_nome.length > 0) ||
+        (_idade.length > 0) ||
+        (_email.length > 0) ||
+        (_celular.length > 0) ||
+        (_telefone.length > 0) ||
+        (_cep.length > 0) ||
+        (_cpf.length > 0) ||
+        (_cnpj.length > 0)) {
+        const collection = db.collection('documents');
+        collection.insertOne(objJSON);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+const getName = function (question = '') {
+    question = question.toString().trim();
+    let nome = '';
+    let start = '';
+    if (question.indexOf('Nome') >= 0) start = 'Nome';
+    if (question.indexOf('nome') >= 0) start = 'nome';
+    if (question.indexOf('chamo') >= 0) start = 'chamo';
+
+    if ((start.length > 0) && (question.indexOf('seu') < 0)) {
+        let indexStart = question.indexOf(start) + start.length + 1;
+        let end = '';
+        if ((question.indexOf(' e ') >= 0) && (question.indexOf(' e ') > indexStart)) end = ' e ';
+        else if ((question.indexOf(',') >= 0) && (question.indexOf(',') > indexStart)) end = ',';
+        else if ((question.indexOf(';') >= 0) && (question.indexOf(';') > indexStart)) end = ';';
+        else if ((question.indexOf('.') >= 0) && (question.indexOf('.') > indexStart)) end = '.';
+        let indexEnd = question.indexOf(end);
+        if (indexEnd < indexStart) indexEnd = question.length;
+        nome = question.substring(indexStart, indexEnd);
+        nome = nome.replace(/é/g, '');
+        nome = nome.replace(/:/g, '');
+        nome = nome.replace(/[0-9]/g, '').trim();
+    }
+    return nome;
+}
+
+const getYears = function (question = '') {
+    question = question.toString().trim();
+    question = question.replace(/[^0-9a-zA-Z\s]/g, '');
+    let idade = '';
+    if (question.indexOf('anos') > 0) {
+        let arr = question.split(' ');
+        let anos = arr[arr.indexOf('anos') - 1];
+        if ((Number(anos) > 0) && (Number(anos) < 125)) idade = anos;
+    }
+    return idade;
+}
+
+const email = function (_email = '') {
+    _email = _email.toString().trim();
+    _email = _email.replace(/[^0-9a-zA-Z@.-_]/g, '');
+    if ((_email.indexOf('@') > 0) && (_email.indexOf('.') > 0) && (_email.length >= 5)) return _email;
+    else return '';
+}
+
+const celular = function (_celular = '') {
+    _celular = _celular.toString().trim();
+    _celular = _celular.replace(/[^0-9]/g, '');
+    if (_celular.indexOf('55') == 0) _celular = _celular.replace('55', '');
+    let _cpf = cpf(_celular);
+    if ((_celular.length == 11) && (_cpf.length <= 0) && (_celular.indexOf('9') > 0)) return _celular;
+    else return '';
+}
+
+const telefone = function (_telefone = '') {
+    _telefone = _telefone.toString().trim();
+    _telefone = _telefone.replace(/[^0-9]/g, '');
+    if (_telefone.indexOf('55') == 0) _telefone = _telefone.replace('55', '');
+    if (_telefone.length == 10) return _telefone;
+    else return '';
+}
+
+const cpf = function (_cpf = '') { //46395485083
+    _cpf = _cpf.toString().trim().replace(/\D/g, '');
+    if (_cpf.toString().length != 11) return '';
+    let result = _cpf;
+    [9, 10].forEach(function (j) {
+        let soma = 0, r;
+        _cpf.split('').splice(0, j).forEach(function (e, i) {
+            soma += parseInt(e) * ((j + 2) -(i + 1));
+        });
+        r = soma % 11;
+        r = (r < 2) ? 0 : 11 - r;
+        if (r != _cpf.substring(j, j + 1)) result = '';
+    });
+    return result;
+}
+
+const cnpj = function (_cnpj = '') { //31835728000167
+    _cnpj = _cnpj.toString().trim().replace(/[^\d]+/g, '');
+    if (_cnpj == '') return '';
+    if (_cnpj.length != 14) return '';
+
+    if (_cnpj == '00000000000000' ||
+        _cnpj == '11111111111111' ||
+        _cnpj == '22222222222222' ||
+        _cnpj == '33333333333333' ||
+        _cnpj == '44444444444444' ||
+        _cnpj == '55555555555555' ||
+        _cnpj == '66666666666666' ||
+        _cnpj == '77777777777777' ||
+        _cnpj == '88888888888888' ||
+        _cnpj == '99999999999999') return '';
+
+    let tamanho = _cnpj.length - 2;
+    let numeros = _cnpj.substring(0, tamanho);
+    let digitos = _cnpj.substring(tamanho);
+    let soma = 0;
+    let pos = tamanho - 7;
+    for (let i = tamanho; i >= 1; i--) {
+        soma += numeros.charAt(tamanho-i) * pos--;
+        if (pos < 2) pos = 9;
+    }
+    let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+    if (resultado != digitos.charAt(0)) return '';
+    tamanho = tamanho + 1;
+    numeros = _cnpj.substring(0, tamanho);
+    soma = 0;
+    pos = tamanho - 7;
+    for (let i = tamanho; i >= 1; i--) {
+        soma += numeros.charAt(tamanho - i) * pos--;
+        if (pos < 2) pos = 9;
+    }
+    resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+    if (resultado != digitos.charAt(1)) return '';
+
+    return _cnpj;
+}
+
+const cep = function (_cep = '') {
+    _cep = _cep.toString().trim();
+    _cep = _cep.replace(/[^0-9]/g,'');
+    if (_cep.length != 8) return '';
+    else return _cep;
+}
 const nlp = function (question, array) {
     let originalQuestion = question.toString().trim();
     let findInput = 0;
     let findIndex = 0;
-    for (let i = 0; i < array.length; i++) {
-        question = question.toString().trim();
-        let input = array[i].input.toString().trim();
-        if (input.length <= 0) input = array[i].output.toString().trim();
-        question = question.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        input = input.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        question = question.replace(/[^a-zA-Z0-9\s]/g, '');
-        input = input.replace(/[^a-zA-Z0-9\s]/g, '');
 
-        let tokenizationQuestion = question.split(' ');
-        let tokenizationInput = input.split(' ');
+    let documents = getDocuments(originalQuestion);
+    if (documents) {
+        return [{
+            "_id": 0,
+            "code_user": -1,
+            "activate": true,
+            "code_current": -1,
+            "code_relation": -1,
+            "code_before": -1,
+            "input": originalQuestion,
+            "output": "Ok! Entendido."
+        }];
+    } else {
+        for (let i = 0; i < array.length; i++) {
+            question = question.toString().trim();
+            let input = array[i].input.toString().trim();
+            if (input.length <= 0) input = array[i].output.toString().trim();
+            question = question.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            input = input.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            question = question.replace(/[^a-zA-Z0-9\s]/g, '');
+            input = input.replace(/[^a-zA-Z0-9\s]/g, '');
 
-        tokenizationQuestion = tokenizationQuestion.map(function (e) {
-            if (e.length > 3) return e.substring(0, e.length - 3); else return e;
-        });
-        tokenizationInput = tokenizationInput.map(function (e) {
-            if (e.length > 3) return e.substring(0, e.length - 3); else return e;
-        });
+            let tokenizationQuestion = question.split(' ');
+            let tokenizationInput = input.split(' ');
 
-        let words = 0;
-        for (let x = 0; x < tokenizationQuestion.length; x++) {
-            if (tokenizationInput.indexOf(tokenizationQuestion[x]) >= 0) words++;
+            tokenizationQuestion = tokenizationQuestion.map(function (e) {
+                if (e.length > 3) return e.substring(0, e.length - 3); else return e;
+            });
+            tokenizationInput = tokenizationInput.map(function (e) {
+                if (e.length > 3) return e.substring(0, e.length - 3); else return e;
+            });
+
+            let words = 0;
+            for (let x = 0; x < tokenizationQuestion.length; x++) {
+                if (tokenizationInput.indexOf(tokenizationQuestion[x]) >= 0) words++;
+            }
+            if (words > findInput) {
+                findInput = words;
+                findIndex = i;
+            }
         }
-        if (words > findInput) {
-            findInput = words;
-            findIndex = i;
-        }
+
+        if (findInput > 0) return [{
+            "_id": array[findIndex]._id,
+            "code_user": array[findIndex].code_user,
+            "activate": array[findIndex].activate,
+            "code_current": array[findIndex].code_current,
+            "code_relation": array[findIndex].code_relation,
+            "code_before": array[findIndex].code_before,
+            "input": originalQuestion,
+            "output": array[findIndex].output
+        }];
+        else return [{
+            "_id": 0,
+            "code_user": array[findIndex].code_user,
+            "activate": array[findIndex].activate,
+            "code_current": array[findIndex].code_current,
+            "code_relation": array[findIndex].code_relation,
+            "code_before": array[findIndex].code_before,
+            "input": originalQuestion,
+            "output": "Desculpe, mas não sei te responder!"
+        }];
     }
-
-    if (findInput > 0) return [{
-        "_id": array[findIndex]._id,
-        "code_user": array[findIndex].code_user,
-        "activate": array[findIndex].activate,
-        "code_current": array[findIndex].code_current,
-        "code_relation": array[findIndex].code_relation,
-        "code_before": array[findIndex].code_before,
-        "input": originalQuestion,
-        "output": array[findIndex].output
-    }];
-    else return [{
-        "_id": 0,
-        "code_user": array[findIndex].code_user,
-        "activate": array[findIndex].activate,
-        "code_current": array[findIndex].code_current,
-        "code_relation": array[findIndex].code_relation,
-        "code_before": array[findIndex].code_before,
-        "input": originalQuestion,
-        "output": "Desculpe, mas não sei te responder!"
-    }];
 }
