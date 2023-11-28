@@ -3,6 +3,7 @@ const app = express();
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 const bodyParser = require('body-parser');
+const fs = require("fs");
 
 let db = null;
 const url = 'mongodb://localhost:27017';
@@ -13,6 +14,10 @@ const urlencodedParser = bodyParser.urlencoded({extended: false});
 
 app.use(jsonParser);
 app.use(urlencodedParser);
+app.use('/css', express.static(__dirname + '/node_modules/bootstrap/dist/css'));
+app.use('/js', express.static(__dirname + '/node_modules/jquery/dist'));
+app.use('/js', express.static(__dirname + '/node_modules/popper.js/dist'));
+app.use('/js', express.static(__dirname + '/node_modules/bootstrap/dist/js'));
 
 MongoClient.connect(url, {useNewUrlParser: true, useUnifiedTopology: true}, function (err, client) {
     assert.equal(null, err);
@@ -23,7 +28,52 @@ MongoClient.connect(url, {useNewUrlParser: true, useUnifiedTopology: true}, func
 
 app.listen(3000);
 console.log('servidor rodando em: localhost:3000');
+//INTERFACE ##############################################################################
+app.get('/login', urlencodedParser, (req, res) => {
+    res.set('Content-Type', 'text/html');
+    const fs = require('fs');
+    const data = fs.readFileSync('./login.html', 'utf8');
+    res.send(data);
+});
 
+app.get('/index', urlencodedParser, (req, res) => {
+    let objJSON = {};
+    if (req.query.user_name) objJSON = req.query.user_name; else objJSON.user_name = false;
+    if (req.query.password) objJSON = req.query.password; else objJSON.password = false;
+
+    findUserOne(objJSON, (result) => {
+        if ((result) && (result.activate == true)) {
+            res.set('Content-Type', 'text/html');
+            const fs = require('fs');
+            const data = fs.readFileSync('./index.html', 'utf8');
+            res.send(data);
+        } else {
+            res.set('Content-Type', 'text/html');
+            const fs = require('fs');
+            const data = fs.readFileSync('./login.html', 'utf8');
+            res.send(data);
+        }
+    });
+});
+
+app.post('/user/search', urlencodedParser, function (req, res) {
+    let objJSON = {};
+    if (req.body.user_name) objJSON = req.body.user_name; else objJSON.user_name = false;
+    if (req.body.password) objJSON = req.body.password; else objJSON.password = false;
+
+    findUserOne(objJSON, (result) => {
+        res.send(result);
+    });
+});
+
+const findUserOne = function (objJSON, callback) {
+    const collection = db.collection('user');
+    collection.findOne(objJSON, (err, result) => {
+        assert.equal(null, err);
+        callback(result);
+    });
+}
+//#########################################################################################
 function cod() {
     const data = new Date();
     const ano = data.getFullYear();
@@ -39,8 +89,8 @@ function cod() {
 
 app.post('/user/insert', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user; else objJSON.code_user = cod();
-    if (req.body.activate) objJSON.activate = req.body.activate; else objJSON.activate = true;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user); else objJSON.code_user = cod();
+    if (req.body.activate) objJSON.activate = Boolean(req.body.activate); else objJSON.activate = true;
     if (req.body.full_name) objJSON.full_name = req.body.full_name; else objJSON.full_name = '';
     if (req.body.user_name) objJSON.user_name = req.body.user_name; else objJSON.user_name = '';
     if (req.body.email) objJSON.email = req.body.email; else objJSON.email = '';
@@ -53,8 +103,8 @@ app.post('/user/insert', urlencodedParser, function (req, res) {
 
 app.post('/user/update', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user;
-    if (req.body.activate) objJSON.activate = req.body.activate;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user);
+    if (req.body.activate) objJSON.activate = Boolean(req.body.activate);
     if (req.body.full_name) objJSON.full_name = req.body.full_name;
     if (req.body.user_name) objJSON.user_name = req.body.user_name;
     if (req.body.email) objJSON.email = req.body.email;
@@ -67,8 +117,8 @@ app.post('/user/update', urlencodedParser, function (req, res) {
 
 app.post('/user/delete', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user;
-    if (req.body.activate) objJSON.activate = req.body.activate;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user);
+    if (req.body.activate) objJSON.activate = Boolean(req.body.activate);
     if (req.body.full_name) objJSON.full_name = req.body.full_name;
     if (req.body.user_name) objJSON.user_name = req.body.user_name;
     if (req.body.email) objJSON.email = req.body.email;
@@ -81,8 +131,8 @@ app.post('/user/delete', urlencodedParser, function (req, res) {
 
 app.post('/user/find', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user;
-    if (req.body.activate) objJSON.activate = req.body.activate;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user);
+    if (req.body.activate) objJSON.activate = Boolean(req.body.activate);
     if (req.body.full_name) objJSON.full_name = req.body.full_name;
     if (req.body.user_name) objJSON.user_name = req.body.user_name;
     if (req.body.email) objJSON.email = req.body.email;
@@ -95,7 +145,7 @@ app.post('/user/find', urlencodedParser, function (req, res) {
 
 app.post('/user/activate/true', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user; else objJSON.code_user = 0;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user); else objJSON.code_user = 0;
 
     activateUserTrue(objJSON, function (result) {
         res.send(result);
@@ -104,7 +154,7 @@ app.post('/user/activate/true', urlencodedParser, function (req, res) {
 
 app.post('/user/activate/false', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user; else objJSON.code_user = 0;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user); else objJSON.code_user = 0;
 
     activateUserFalse(objJSON, function (result) {
         res.send(result);
@@ -113,7 +163,7 @@ app.post('/user/activate/false', urlencodedParser, function (req, res) {
 
 app.post('/user/delete/all', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user; else objJSON.code_user = 0;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user); else objJSON.code_user = 0;
 
     deleteUserAll(objJSON, function (result) {
         res.send(result);
@@ -122,11 +172,11 @@ app.post('/user/delete/all', urlencodedParser, function (req, res) {
 
 app.post('/chatbot/insert', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user; else objJSON.code_user = 0;
-    if (req.body.activate) objJSON.activate = req.body.activate; else objJSON.activate = true;
-    if (req.body.code_current) objJSON.code_current = req.body.code_current; else objJSON.code_current = cod();
-    if (req.body.code_relation) objJSON.code_relation = req.body.code_relation; else objJSON.code_relation = 0;
-    if (req.body.code_before) objJSON.code_before = req.body.code_before; else objJSON.code_before = 0;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user); else objJSON.code_user = 0;
+    if (req.body.activate) objJSON.activate = Boolean(req.body.activate); else objJSON.activate = true;
+    if (req.body.code_current) objJSON.code_current = Number(req.body.code_current); else objJSON.code_current = cod();
+    if (req.body.code_relation) objJSON.code_relation = Number(req.body.code_relation); else objJSON.code_relation = 0;
+    if (req.body.code_before) objJSON.code_before = Number(req.body.code_before); else objJSON.code_before = 0;
     if (req.body.input) objJSON.input = req.body.input; else objJSON.input = '';
     if (req.body.output) objJSON.output = req.body.output; else objJSON.output = 'Desculpe, mas não entendi.';
 
@@ -137,11 +187,11 @@ app.post('/chatbot/insert', urlencodedParser, function (req, res) {
 
 app.post('/chatbot/update', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user;
-    if (req.body.activate) objJSON.activate = req.body.activate; else objJSON.activate = true;
-    if (req.body.code_current) objJSON.code_current = req.body.code_current;
-    if (req.body.code_relation) objJSON.code_relation = req.body.code_relation;
-    if (req.body.code_before) objJSON.code_before = req.body.code_before;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user);
+    if (req.body.activate) objJSON.activate = Boolean(req.body.activate); else objJSON.activate = true;
+    if (req.body.code_current) objJSON.code_current = Number(req.body.code_current);
+    if (req.body.code_relation) objJSON.code_relation = Number(req.body.code_relation);
+    if (req.body.code_before) objJSON.code_before = Number(req.body.code_before);
     if (req.body.input) objJSON.input = req.body.input;
     if (req.body.output) objJSON.output = req.body.output;
 
@@ -152,11 +202,11 @@ app.post('/chatbot/update', urlencodedParser, function (req, res) {
 
 app.post('/chatbot/delete', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user;
-    if (req.body.activate) objJSON.activate = req.body.activate;
-    if (req.body.code_current) objJSON.code_current = req.body.code_current;
-    if (req.body.code_relation) objJSON.code_relation = req.body.code_relation;
-    if (req.body.code_before) objJSON.code_before = req.body.code_before;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user);
+    if (req.body.activate) objJSON.activate = Boolean(req.body.activate);
+    if (req.body.code_current) objJSON.code_current = Number(req.body.code_current);
+    if (req.body.code_relation) objJSON.code_relation = Number(req.body.code_relation);
+    if (req.body.code_before) objJSON.code_before = Number(req.body.code_before);
     if (req.body.input) objJSON.input = req.body.input;
     if (req.body.output) objJSON.output = req.body.output;
 
@@ -167,11 +217,11 @@ app.post('/chatbot/delete', urlencodedParser, function (req, res) {
 
 app.post('/chatbot/find', urlencodedParser, function (req, res) {
     let objJSON = {};
-    if (req.body.code_user) objJSON.code_user = req.body.code_user;
-    if (req.body.activate) objJSON.activate = req.body.activate;
-    if (req.body.code_current) objJSON.code_current = req.body.code_current;
-    if (req.body.code_relation) objJSON.code_relation = req.body.code_relation;
-    if (req.body.code_before) objJSON.code_before = req.body.code_before;
+    if (req.body.code_user) objJSON.code_user = Number(req.body.code_user);
+    if (req.body.activate) objJSON.activate = Boolean(req.body.activate);
+    if (req.body.code_current) objJSON.code_current = Number(req.body.code_current);
+    if (req.body.code_relation) objJSON.code_relation = Number(req.body.code_relation);
+    if (req.body.code_before) objJSON.code_before = Number(req.body.code_before);
     if (req.body.input) objJSON.input = req.body.input;
     if (req.body.output) objJSON.output = req.body.output;
 
@@ -183,7 +233,7 @@ app.post('/chatbot/find', urlencodedParser, function (req, res) {
 app.get('/chatbot/question', urlencodedParser, (req, res) => {
     let objJSON = {};
     if (req.query.code_user) objJSON.code_user = Number(req.query.code_user); else objJSON.code_user = 0;
-    if (req.query.activate) objJSON.activate = req.query.activate; else objJSON.activate = true;
+    if (req.query.activate) objJSON.activate = Boolean(req.query.activate); else objJSON.activate = true;
     if (req.query.code_before) objJSON.code_before = Number(req.query.code_before); else objJSON.code_before = 0;
     if (req.query.input) objJSON.input = req.query.input; else objJSON.input = '';
 
@@ -379,15 +429,19 @@ const getName = function (question = '') {
     if (question.indexOf('chamo') >= 0) start = 'chamo';
     if ((start.length > 0) && (question.indexOf('seu') < 0)) {
         let indexStart = question.indexOf(start) + start.length + 1;
-        let index1 = question.indexOf(' e '); if (index1 < 0) index1 = Infinity;
-        let index2 = question.indexOf(','); if (index2 < 0) index2 = Infinity;
-        let index3 = question.indexOf(';'); if (index3 < 0) index3 = Infinity;
-        let index4 = question.indexOf('.'); if (index4 < 0) index4 = Infinity;
+        let index1 = question.indexOf(' e ');
+        if (index1 < 0) index1 = Infinity;
+        let index2 = question.indexOf(',');
+        if (index2 < 0) index2 = Infinity;
+        let index3 = question.indexOf(';');
+        if (index3 < 0) index3 = Infinity;
+        let index4 = question.indexOf('.');
+        if (index4 < 0) index4 = Infinity;
         let indexEnd = [
-            Math.abs(index1-indexStart),
-            Math.abs(index2-indexStart),
-            Math.abs(index3-indexStart),
-            Math.abs(index4-indexStart),
+            Math.abs(index1 - indexStart),
+            Math.abs(index2 - indexStart),
+            Math.abs(index3 - indexStart),
+            Math.abs(index4 - indexStart)
         ].sort((a, b) => a - b)[0] + indexStart;
         if (indexEnd < indexStart) indexEnd = question.length;
         nome = question.substring(indexStart, indexEnd);
@@ -441,7 +495,7 @@ const cpf = function (_cpf = '') { //46395485083
     [9, 10].forEach(function (j) {
         let soma = 0, r;
         _cpf.split('').splice(0, j).forEach(function (e, i) {
-            soma += parseInt(e) * ((j + 2) -(i + 1));
+            soma += parseInt(e) * ((j + 2) - (i + 1));
         });
         r = soma % 11;
         r = (r < 2) ? 0 : 11 - r;
@@ -472,7 +526,7 @@ const cnpj = function (_cnpj = '') { //31835728000167
     let soma = 0;
     let pos = tamanho - 7;
     for (let i = tamanho; i >= 1; i--) {
-        soma += numeros.charAt(tamanho-i) * pos--;
+        soma += numeros.charAt(tamanho - i) * pos--;
         if (pos < 2) pos = 9;
     }
     let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
@@ -493,7 +547,7 @@ const cnpj = function (_cnpj = '') { //31835728000167
 
 const cep = function (_cep = '') {
     _cep = _cep.toString().trim();
-    _cep = _cep.replace(/[^0-9]/g,'');
+    _cep = _cep.replace(/[^0-9]/g, '');
     if (_cep.length != 8) return '';
     else return _cep;
 }
